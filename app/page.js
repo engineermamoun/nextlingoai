@@ -1,10 +1,10 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+
+'use client'
+import * as React from 'react';
+ 
 
 export default function Home() {
   return (
-    <main className={styles.main}>
-      <h1>سادس تطبيق للتدريب من دورة اكادمية حاسوب</h1>
-    </main>
+ <h1>حاسوب</h1>
   );
 }
