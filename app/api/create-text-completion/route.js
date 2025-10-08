@@ -1,39 +1,27 @@
-import { GoogleGenAI, ApiError } from "@google/genai";
+import { ApiError, GoogleGenAI } from "@google/genai";
 import { NextResponse } from "next/server";
 
 export async function POST(request) {
   const ai = new GoogleGenAI({});
   const body = await request.json();
-  const { message, chatHistory } = body;
-
-  const newChat = {
-    role: "user",
-    parts: [{ text: message }],
-  };
-  const fullconversation = [...chatHistory, newChat];
-  if (!message) {
+  const messagecontent = body.message;
+  if (!messagecontent) {
     return NextResponse.json({ error: "Message content is missing." });
   }
   try {
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
-      contents: fullconversation,
-      config: {
-        systemInstruction:
-          "You are an English teacher. your name is nextlingoai",
-      },
+      contents: messagecontent,
       config: {
         thinkingConfig: {
           thinkingBudget: 0, // Disables thinking
         },
+        systemInstruction:
+          "You are a clean grammar and spelling checker. Your only output must be the grammatically correct and polished version of the user's input. Do not include greetings, explanations, or any conversational text.",
       },
     });
-    const responseModel = {
-      role: "model",
-      parts: [{ text: response.text }],
-    };
-
-    return NextResponse.json({ responseModel });
+    const generatedText = response.text;
+    return NextResponse.json({ message: generatedText });
   } catch (error) {
     console.error("Gemini API Error:", error);
     // Return a structured error response
@@ -71,25 +59,3 @@ export async function POST(request) {
     );
   }
 }
-
-// {
-//   "message": "what did i tell you my name is ? and where i live",
-//   "chatHistory": [
-//     {
-//       "role": "user",
-//       "parts": [
-//         {
-//           "text": "hello please from now on call me holidor and live in uk"
-//         }
-//       ]
-//     },
-//     {
-//       "role": "model",
-//       "parts": [
-//         {
-//           "text": "Great to meet you mamoun. What would you like to know?"
-//         }
-//       ]
-//     }
-//   ]
-// }
