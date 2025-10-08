@@ -1,10 +1,7 @@
-
-'use client'
-import * as React from 'react';
- 
+"use client";
+import * as React from "react";
+import MainLayout from "./layouts/MainLayout";
 
 export default function Home() {
-  return (
- <h1>حاسوب</h1>
-  );
+  return <MainLayout ><h1>welcome to the papli</h1></MainLayout>;
 }
