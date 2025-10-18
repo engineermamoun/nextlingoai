@@ -1,53 +1,119 @@
-// /app/componets/SideBar/SideBar.js
+// /app/components/SideBar/SideBar.js
 "use client";
-import { Box, Drawer } from "@mui/material";
+
+// -------------------------------
+// Imports
+// -------------------------------
+import { Box, Drawer, List } from "@mui/material";
+// Box: generic container component from MUI for layout
+// Drawer: MUI component for side navigation panels
+
 import CustomizedListItem from "./CustomizedListItem";
-import { useState } from "react";
+// Custom component rendering each lecture item in the sidebar
+
+import { useContext, useEffect, useState } from "react";
+// React hook for accessing context values
+
 import MenuToolbar from "./MenuToolbar";
+// Component rendering the top toolbar/menu inside the sidebar
+
 import MenuFooter from "./MenuFooter";
+// Component rendering the footer section of the sidebar
 
-const drawerWidth = 270;
-export default function SideBar(props) {
-  const { window, mobileOpen, handleDrawerToggle } = props;
-  //   const [mobileOpen, setMobileOpen] = useState(props.mobileOpenFunc);
-  // const handleDrawerClose = () => {
-  //   // props.setIsClosing(true);
-  //   setMobileOpen(!mobileOpen);
-  // };
+import { AppContext } from "../context/AppContext";
+import { frenchLevels, frenchProgram } from "@/app/appData";
+// Context to share app-wide state such as drawer open/close status and drawer width
 
-  // const handleDrawerTransitionEnd = () => {
-  //   // props.setIsClosing(false);
-  // };
+// -------------------------------
+// SideBar Component
+// -------------------------------
+// Purpose:
+// - Render a responsive sidebar navigation menu
+// - Show temporary drawer on mobile and permanent drawer on larger screens
+// - List all lectures dynamically from a predefined object
+// Inputs:
+// - Uses context values from AppContext (mobileOpen, setMobileOpen, drawerWidth)
+// Outputs:
+// - Renders MUI Drawer components containing toolbar, lecture list, and footer
+// Side Effects:
+// - Toggles sidebar open/close state on mobile
+export default function SideBar() {
+  // -------------------------------
+  // Context values
+  // -------------------------------
+  const { mobileOpen, setMobileOpen, drawerWidth, level } =
+    useContext(AppContext);
+  // mobileOpen: boolean indicating if temporary drawer is open on mobile
+  // setMobileOpen: function to toggle mobileOpen
+  // drawerWidth: width of the sidebar drawer
 
-  const lectureObject = {
-    "simple-present-tense": "زمن المضارع البسيط",
-    "present-continuous-tense": "زمن المضارع المستمر",
-    "simple-past-tense": "زمن الماضي البسيط",
-    "past-continuous-tense": "زمن الماضي المستمر",
-    "present-perfect-tense": "زمن المضارع التام",
-    "future-tense": "زمن المستقبل",
-    "passive-voice": "المبني للمجهول",
-    "conditional-sentences": "الجمل الشرطية",
-    "modal-verbs": "الأفعال الناقصة",
+  // -------------------------------
+  // handleDrawerToggle
+  // -------------------------------
+  // Purpose:
+  // - Toggle the mobile drawer open/close state
+  // Input:
+  // - None
+  // Output:
+  // - Updates mobileOpen state in AppContext
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
   };
 
-  const container =
-    window !== undefined ? () => window().document.body : undefined;
+  // -------------------------------
+  // Lecture Object
+  // -------------------------------
+  // Purpose:
+  // - Map of lecture keys to their display names in Frensh
+  // - Used to dynamically render the list of lectures in the sidebar
+  const [coursesObject, setCoursesObject] = useState([]);
+
+  function generateSlug(title) {
+    return title
+      .trim() // remove spaces at start/end
+      .replace(/[\s&\/\\#,+()$~%.'":*?<>{}—–−]+/g, "-") // replace spaces & symbols including different dashes with -
+      .replace(/^-+|-+$/g, "") // remove leading/trailing dashes
+      .replace(/-+/g, "-"); // replace multiple consecutive dashes with one
+  }
+
+  async function getCourseTitlesByLevel(val) {
+    // Find the level object
+    const levelData = frenchProgram.find((item) => item.level === val);
+
+    if (!levelData) return []; // Return empty array if level not found
+
+    // Extract all lesson titles
+    return levelData.lessons.map((lesson) => lesson.title);
+  }
+  useEffect(() => {
+    async function fetchCourses() {
+      const titles = await getCourseTitlesByLevel(level);
+      setCoursesObject(titles);
+    }
+
+    fetchCourses();
+  }, [level]); // re-run if level changes
+
+   
+  // -------------------------------
+  // Render
+  // -------------------------------
+  // The sidebar renders differently depending on screen size:
+  // - Temporary drawer for mobile (xs)
+  // - Permanent drawer for larger screens (sm+)
   return (
     <Box
       component="nav"
       sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
       aria-label="mailbox folders"
     >
-      {/* The implementation can be swapped with js to avoid SEO duplication of links. */}
+      {/* Temporary Drawer for Mobile */}
       <Drawer
-        container={container}
         variant="temporary"
         open={mobileOpen}
-        // onTransitionEnd={handleDrawerTransitionEnd}
-        onClose={handleDrawerToggle}
+        onClose={handleDrawerToggle} // Close drawer on outside click or toggle
         sx={{
-          display: { xs: "block", sm: "none" },
+          display: { xs: "block", sm: "none" }, // Show only on xs screens
           "& .MuiDrawer-paper": {
             boxSizing: "border-box",
             width: drawerWidth,
@@ -55,27 +121,35 @@ export default function SideBar(props) {
         }}
         slotProps={{
           root: {
-            keepMounted: true, // Better open performance on mobile.
+            keepMounted: true, // Improves performance on mobile by keeping component mounted
           },
         }}
       >
+        {/* Top toolbar inside drawer */}
         <MenuToolbar />
-        {lectureObject &&
-          Object.values(lectureObject).map((item, index) => {
-            return (
-              <CustomizedListItem
-                key={index}
-                lectureName={item}
-                lectureNameEn={Object.keys(lectureObject)[index]}
-              />
-            );
-          })}
+        {/* Dynamic list of lectures */}
+        <List>
+          {coursesObject &&
+            Object.values(coursesObject).map((item, index) => {
+              return (
+                <CustomizedListItem
+                  key={index}
+                  lectureName={item} // Frensh display name
+                  lectureNameEn={generateSlug(item)}
+                  // lectureNameEn={Object.keys(lectureObject)[index]} // English key
+                />
+              );
+            })}
+        </List>
+        {/* Footer inside drawer */}
         <MenuFooter />
       </Drawer>
+
+      {/* Permanent Drawer for Larger Screens */}
       <Drawer
         variant="permanent"
         sx={{
-          display: { xs: "none", sm: "block" },
+          display: { xs: "none", sm: "block" }, // Hide on mobile
           "& .MuiDrawer-paper": {
             boxSizing: "border-box",
             width: drawerWidth,
@@ -84,18 +158,21 @@ export default function SideBar(props) {
         open
       >
         <MenuToolbar />
-        {lectureObject &&
-          Object.values(lectureObject).map((item, index) => {
-            return (
-              <CustomizedListItem
-                key={index}
-                lectureName={item}
-                lectureNameEn={Object.keys(lectureObject)[index]}
-              />
-            );
-          })}
-        <MenuFooter />
+        <List>
+          {coursesObject &&
+            Object.values(coursesObject).map((item, index) => {
+              return (
+                <CustomizedListItem
+                  key={index}
+                  lectureName={item}
+                  // lectureNameEn={Object.keys(lectureObject)[index]}
+                  lectureNameEn={generateSlug(item)}
+                />
+              );
+            })}
+        </List>
       </Drawer>
+      {/* <MenuFooter /> */}
     </Box>
   );
 }

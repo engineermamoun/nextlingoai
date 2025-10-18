@@ -1,0 +1,33 @@
+.form {
+  width: 50%;
+  position: relative;
+  margin: auto;
+}
+
+/* .input {
+    direction: rtl;
+} */
+
+.sendIcon {
+  position: absolute !important;
+  right: 0%;
+  /* transform: rotate(180deg) translateY(50%); */
+  top: 4%;
+}
+
+@media (max-width: 900px) {
+  .form {
+    width: 70%;
+  }
+}
+
+@media (max-width: 600px) {
+  .footerBox {
+    width: 100% !important;
+  }
+
+  .form {
+    width: 90%;
+    margin: auto;
+  }
+}

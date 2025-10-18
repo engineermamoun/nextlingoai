@@ -1,35 +1,71 @@
-import { ApiError, createPartFromUri, GoogleGenAI } from "@google/genai";
-import { NextResponse } from "next/server";
+// /app/api/speech-to-text/route.js
 
-/** * Converts a ReadableStream (from uploaded audio file) into a Buffer.
- *  @param {File} file - The uploaded audio file object from FormData.
- *  @returns {Promise<Buffer>} - A Buffer representation of the file contents. */
+// -------------------------------
+// Imports
+// -------------------------------
+import { ApiError, createPartFromUri, GoogleGenAI } from "@google/genai";
+// ApiError: Exception class for handling Gemini API-specific errors.
+// createPartFromUri: Utility function to create a reference part for uploaded files.
+// GoogleGenAI: Main Gemini AI client for model interaction, file uploads, and content generation.
+
+import { NextResponse } from "next/server";
+// NextResponse: Next.js utility to build structured HTTP responses from API routes.
+
+// -------------------------------
+// Helper Function: convertToBuffer
+// -------------------------------
+/**
+ * Converts a ReadableStream (from uploaded audio file) into a Buffer.
+ * This is required because the Gemini SDK expects file data as a Blob or Buffer.
+ *
+ * @param {File} file - Uploaded audio file object from FormData.
+ * @returns {Promise<Buffer>} - Resolves to a Buffer containing the file's binary data.
+ */
 async function convertToBuffer(file) {
-  const stream = file.stream();
-  const chunks = [];
+  const stream = file.stream(); // Access the ReadableStream from the uploaded File object
+  const chunks = []; // Array to accumulate stream chunks
+
+  // Iterate asynchronously over the stream and store chunks
   for await (const chunk of stream) {
     chunks.push(chunk);
   }
+
+  // Concatenate all chunks into a single Buffer
   const buffer = Buffer.concat(chunks);
   return buffer;
 }
-/** * Handles the POST request for audio transcription.
- *  The route expects a 'file' field in the FormData body containing an audio file.
- *  Workflow:
- *  1. Converts uploaded audio into a Buffer.
- *  2. Uploads the audio to Gemini’s File API.
- *  3. Generates a transcription using Gemini 2.5 Flash.
- *  4. Returns the transcript as JSON.
- *  5. Cleans up uploaded files from Gemini’s storage. */
+
+// -------------------------------
+// POST Handler: Audio Transcription
+// -------------------------------
+/**
+ * Handles POST requests to transcribe audio files into text using Gemini AI.
+ * Workflow:
+ * 1. Extract audio file from FormData request body.
+ * 2. Convert audio to Buffer and prepare it for Gemini file upload.
+ * 3. Upload the audio file to Gemini File API.
+ * 4. Generate a transcription using Gemini 2.5 Flash model.
+ * 5. Return the transcript as JSON.
+ * 6. Clean up uploaded file from Gemini storage.
+ *
+ * @param {Request} request - Incoming Next.js request object containing FormData with audio file.
+ * @returns {NextResponse} - JSON response containing either the transcript or an error message.
+ */
 export async function POST(request) {
-  const ai = new GoogleGenAI({}); // Initialize Gemini AI client (reads API key from environment)
-  // Text instruction sent to the model
+  // Initialize Gemini AI client (reads API key from environment variables)
+  const ai = new GoogleGenAI({});
+
+  // User-facing instruction for transcription
   const prompt =
     "Generate a full and accurate transcript of the speech in this audio file.";
-  // Extract uploaded audio file from the incoming request
+
+  // -------------------------------
+  // Step 0: Extract uploaded audio file
+  // -------------------------------
   const formData = await request.formData();
   const audio_file = formData.get("file");
-  // Validate file existence
+
+  // Validate existence of audio file
   if (!audio_file) {
     return NextResponse.json(
       { error: "No file found under the 'file' field." },
@@ -37,60 +73,86 @@ export async function POST(request) {
     );
   }
 
-  let uploadedFile = null;
+  let uploadedFile = null; // Tracks uploaded file for cleanup
+
   try {
-    // STEP 1: Convert uploaded audio stream to Buffer
+    // -------------------------------
+    // Step 1: Convert audio stream to Buffer
+    // -------------------------------
     const audioBuffer = await convertToBuffer(audio_file);
-    // STEP 2: Determine MIME type (default to MP3 if not specified)
+
+    // -------------------------------
+    // Step 2: Determine MIME type
+    // -------------------------------
     const mimeType = audio_file.type || "audio/mp3";
-    // STEP 3: Convert Buffer to Blob — required by Gemini SDK to include file size metadata
+
+    // -------------------------------
+    // Step 3: Prepare Blob for Gemini SDK
+    // -------------------------------
     const fileToUpload = new Blob([audioBuffer], { type: mimeType });
     fileToUpload.name = audio_file.name || "uploaded_audio";
-    // STEP 4: Upload audio Blob to Gemini’s File API
+
+    // -------------------------------
+    // Step 4: Upload audio to Gemini File API
+    // -------------------------------
     uploadedFile = await ai.files.upload({
-      file: fileToUpload, // Pass the Buffer
+      file: fileToUpload,
       config: {
         mimeType: mimeType,
         displayName: audio_file.name || "uploaded_audio",
       },
     });
-    // STEP 5: Create a reference Part for the uploaded file using its URI
+
+    // -------------------------------
+    // Step 5: Create a Part reference from uploaded file URI
+    // -------------------------------
     const audioPart = createPartFromUri(
       uploadedFile.uri,
       uploadedFile.mimeType
     );
-    // STEP 6: Call the Gemini model with both audio reference and prompt
+
+    // -------------------------------
+    // Step 6: Generate transcription via Gemini model
+    // -------------------------------
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
-      // The contents now contain the audio reference and the prompt
-      contents: [{ role: "user", parts: [audioPart, { text: prompt }] }],
-      config: {
-        thinkingConfig: {
-          thinkingBudget: 0,
+      contents: [
+        {
+          role: "user",
+          parts: [audioPart, { text: prompt }],
         },
-        // IMPORTANT: The system instruction must align with the prompt!
+      ],
+      config: {
+        thinkingConfig: { thinkingBudget: 0 },
         systemInstruction:
-          "You are a helpful assistant. Your sole task is to provide a transcript of the audio provided by the user. Do not add any conversational text.",
+          "You are a helpful assistant. Your sole task is to provide a transcript of the audio provided by the user. Do not add any conversational text.  You must answer only with english",
       },
     });
-    // STEP 7: Extract the transcription text
+
+    // -------------------------------
+    // Step 7: Extract transcription text
+    // -------------------------------
     const generatedText = response.text;
-    // STEP 8: Return the transcript as JSON
+
+    // -------------------------------
+    // Step 8: Return transcription as JSON
+    // -------------------------------
     return NextResponse.json({ message: generatedText });
   } catch (error) {
     console.error("Gemini API Error:", error);
-    // Return a structured error response
 
-    // 1. Check for the specific API Error type
+    // -------------------------------
+    // API-specific error handling
+    // -------------------------------
     if (error instanceof ApiError) {
-      // Log structured error info for debugging
       console.error(
         `API Error Status: ${error.status}, Message: ${error.message}`
       );
-      // Determine user-friendly status and message based on API status
+
       let errorMessage = "An error occurred with the AI service.";
       let status = 500;
 
+      // Map Gemini API error status codes to user-friendly messages
       if (error.status === 400) {
         errorMessage = "Invalid request or malformed data sent to the AI.";
         status = 400;
@@ -103,19 +165,19 @@ export async function POST(request) {
         status = 429;
       }
 
-      // Return the structured error response
       return NextResponse.json({ error: errorMessage }, { status });
     }
 
-    // 2. Handle non-API/general errors (e.g., network failure, JSON parse error)
+    // General error handling (network failures, unexpected errors)
     return NextResponse.json(
       { error: "An unexpected server error occurred." },
       { status: 500 }
     );
   } finally {
-    // CRUCIAL: Always clean up the uploaded file resource
+    // -------------------------------
+    // Cleanup uploaded file from Gemini storage
+    // -------------------------------
     if (uploadedFile) {
-      // Use uploadedFile.name (the files API resource name) for deletion
       await ai.files
         .delete({ name: uploadedFile.name })
         .catch((e) => console.error("File cleanup failed:", e));
