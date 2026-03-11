@@ -1,34 +1,70 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+<h2  dir="rtl"> نيكست لينجو - NextLingo  </h2>
+<p dir="rtl">سادس تطبيق للتدريب من دورة اكادمية حاسوب باستخدام nextjs - mui - openai</p>
+<p dir="rtl">تعلم اللغة الفرنسية بذكاء مع مرشدك الخاص المدعوم بالذكاء الاصطناعي (Google Gemini). منصة تفاعلية كاملة مصممة خصيصًا للناطقين باللغة النجليزية لمساعدتك على إتقان الفرنسية من المستوى A1 إلى C2.</p>
 
-## Getting Started
+![NextLingo Banner](./marketingpage.png)
 
-First, run the development server:
+<h3  dir="rtl">
+ ✨ المميزات الرئيسية
+</h3>
+<div dir="rtl">
+
+- **🗣️ محادثة تفاعلية مع الذكاء الاصطناعي**  
+  تدرب على المحادثة الصوتية والنصية. سجل صوتك بالفرنسية واحصل على تصحيح فوري للأخطاء مع شرح مبسط.
+
+- **📚 شروحات مخصصة للدروس**  
+  اختر مستواك (A1 حتى C2) واحصل على شروحات مخصصة. اسأل المعلم الافتراضي عن أي نقطة ويجاوبك وكأنه معلمك الخاص.
+
+- **❓ أسئلة تفاعلية مع تصحيح ذكي**  
+  يقدم لك النظام أسئلة حسب مستواك، يصحح إجاباتك، ويشرح لك لماذا كانت الإجابة صحيحة أو خاطئة. يمكنك مناقشة كل سؤال مع الذكاء الاصطناعي.
+
+- **🔄 تمارين الترجمة**  
+  تدرب على الترجمة من العربية إلى الفرنسية والعكس. يقوم النظام بتصحيح ترجماتك ويشرح لك الفروقات اللغوية والأخطاء الشائعة.
+
+- **🌓 واجهة متعددة السمات**  
+  يدعم الموقع الوضع الفاتح، الداكن، أو تلقائي حسب تفضيلات جهازك.
+
+- **📐 دعم كامل للغة العربية (RTL)**  
+  واجهة مستخدم مصممة بالكامل لتناسب الاتجاه من اليمين لليسار، مع خطوط عربية مناسبة وتجربة مستخدم سلسة.
+
+- **📱 تصميم متجاوب بالكامل**  
+  تم بناء الواجهة باستخدام MUI (Material-UI) لتعمل بشكل مثالي على جميع الأجهزة (جوال، جهاز لوحي، كمبيوتر).
+
+</div>
+<h3  dir="rtl">
+  🛠️ التقنيات المستخدمة
+</h3>
+<div dir="rtl">
+
+- **الإطار الرئيسي:** Next.js 15 (JavaScript)
+- **الواجهة الأمامية:** Material-UI (MUI) مع:
+  - دعم كامل للسمات (Dark/Light/System)
+  - دعم RTL (من اليمين لليسار) باستخدام `stylis-plugin-rtl`
+  - خطوط عربية محسنة (Cairo، Tajawal)
+- **الذكاء الاصطناعي:** Google Generative AI (Gemini) عبر حزمة `@google/genai`
+- **التسجيل الصوتي:** Web Audio API
+- **بنية المشروع:** Full-stack (تطبيق كامل الخدمات مع Next.js)
+
+</div>
+
+<h3  dir="rtl"> 
+📋 متطلبات التشغيل
+</h3>
+<div dir="rtl">
+
+- Node.js (الإصدار 18 أو أحدث)
+- مفتاح API من Google AI Studio (Gemini)
+
+</div>
+
+ 
+<div dir="rtl" lang="ar">
+
+<h2 dir="rtl">⚙️ تشغيل التطبيق</h2>
 
 ```bash
+# تثبيت الحزم
+npm install
+
+# تشغيل التطبيق في وضع التطوير
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
